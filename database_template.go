@@ -39,6 +39,7 @@ func (this *DatabaseTemplateImpl) Close() (err error) {
 		return nil
 	}
 	err = this.Conn.Close()
+	this.Conn = nil
 	return
 }
 func (this *DatabaseTemplateImpl) Query(sql string, mapRow MapRow, params ...interface{}) (object interface{}, err error) {
