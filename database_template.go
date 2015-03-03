@@ -32,7 +32,7 @@ func (this *DatabaseTemplateImpl) IsConnOk() (ok bool) {
 	if this.Conn == nil {
 		return false
 	}
-	return this.Conn.Ping() != nil
+	return this.Conn.Ping() == nil
 }
 func (this *DatabaseTemplateImpl) Close() (err error) {
 	if this.Conn == nil {
