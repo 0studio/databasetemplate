@@ -21,6 +21,11 @@ type DatabaseTemplate interface {
 	QueryObject(sql string, mapRow MapRow, params ...interface{}) (interface{}, error)
 	Close() error
 	IsConnOk() bool
+	GetConn() *sql.DB
+}
+
+func (this *DatabaseTemplateImpl) GetConn() *sql.DB {
+	return this.Conn
 }
 
 func (this *DatabaseTemplateImpl) IsConnOk() (ok bool) {
