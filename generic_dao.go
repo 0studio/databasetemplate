@@ -19,6 +19,11 @@ type GenericDaoImpl struct {
 	DatabaseTemplate DatabaseTemplate
 }
 
+func (this GenericDaoImpl) IsOk() bool {
+	return this.DatabaseTemplate != nil && this.DatabaseTemplate.IsConnOk()
+
+}
+
 func (this GenericDaoImpl) GenerateInStatement(values []interface{}) (string, error) {
 	if values == nil || len(values) == 0 {
 		return "()", nil
