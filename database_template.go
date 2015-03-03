@@ -19,8 +19,23 @@ type DatabaseTemplate interface {
 	QueryArray(sql string, mapRow MapRow, params ...interface{}) ([]interface{}, error)
 	QueryIntoArray(resultList interface{}, sql string, mapRow MapRow, params ...interface{}) error
 	QueryObject(sql string, mapRow MapRow, params ...interface{}) (interface{}, error)
+	Close() error
+	IsConnOk() bool
 }
 
+func (this *DatabaseTemplateImpl) IsConnOk() (ok bool) {
+	if this.Conn == nil {
+		return false
+	}
+	return this.Conn.Ping() != nil
+}
+func (this *DatabaseTemplateImpl) Close() (err error) {
+	if this.Conn == nil {
+		return nil
+	}
+	err = this.Conn.Close()
+	return
+}
 func (this *DatabaseTemplateImpl) Query(sql string, mapRow MapRow, params ...interface{}) (object interface{}, err error) {
 	result, error := this.Conn.Query(sql, params...)
 	d := func() {
