@@ -17,6 +17,7 @@ type DatabaseTemplate interface {
 	QueryObject(sum key.Sum, sql string, mapRow MapRow, params ...interface{}) (interface{}, error)
 	Close() error
 	GetDatabaseTemplateBySum(sum key.Sum) (DatabaseTemplate, int, error)
+	GetDatabaseTemplateByIdx(idx int) (DatabaseTemplate, error)
 }
 
 type DatabaseTemplateImpl struct {
@@ -28,6 +29,10 @@ type MapRow func(resultSet *sql.Rows) (object interface{}, err error)
 func (this *DatabaseTemplateImpl) GetDatabaseTemplateBySum(s key.Sum) (DatabaseTemplate, int, error) {
 	return this, 0, nil
 }
+func (this *DatabaseTemplateImpl) GetDatabaseTemplateByIdx(idx int) (DatabaseTemplate, error) {
+	return this, nil
+}
+
 func (this *DatabaseTemplateImpl) Close() (err error) {
 	if this.Conn == nil {
 		return nil

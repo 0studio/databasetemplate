@@ -37,6 +37,14 @@ func (this *DatabaseTemplateImplShardingImpl) Close() (err error) {
 	}
 	return
 }
+func (this *DatabaseTemplateImplShardingImpl) GetDatabaseTemplateByIdx(idx int) (DatabaseTemplate, error) {
+	if idx >= len(this.dtList) {
+		return nil, errors.New("datatemplate_idx_overflow")
+	}
+
+	return this.dtList[idx], nil
+
+}
 func (this *DatabaseTemplateImplShardingImpl) GetDatabaseTemplateBySum(s key.Sum) (DatabaseTemplate, int, error) {
 	if len(this.dtList) == 0 {
 		return nil, 0, errors.New("empty_datatemplate_list")
