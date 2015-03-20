@@ -32,7 +32,7 @@ func NewDatabaseTemplateShardingWithConfig(dbConfig DBConfig, splitDBCount int, 
 			return
 		}
 	}
-	return
+	return &DatabaseTemplateImplShardingImpl{dtList}, true
 }
 func NewDatabaseTemplate(db *sql.DB) (dt DatabaseTemplate) {
 	return &DatabaseTemplateImpl{db}
