@@ -18,6 +18,7 @@ type DatabaseTemplate interface {
 	Close() error
 	GetDatabaseTemplateBySum(sum key.Sum) (DatabaseTemplate, int, error)
 	GetDatabaseTemplateByIdx(idx int) (DatabaseTemplate, error)
+	IsSharding() bool
 }
 
 type DatabaseTemplateImpl struct {
@@ -26,6 +27,9 @@ type DatabaseTemplateImpl struct {
 
 type MapRow func(resultSet *sql.Rows) (object interface{}, err error)
 
+func (this *DatabaseTemplateImpl) IsSharding() bool {
+	return false
+}
 func (this *DatabaseTemplateImpl) GetDatabaseTemplateBySum(s key.Sum) (DatabaseTemplate, int, error) {
 	return this, 0, nil
 }
