@@ -3,8 +3,21 @@ package databasetemplate
 import (
 	"database/sql"
 	"fmt"
+	"github.com/0studio/storage_key"
 	"reflect"
 )
+
+type DatabaseTemplate interface {
+	// Query(sum key.Sum,sql string, mapRow MapRow, params ...interface{}) (object interface{}, err error)
+	ExecDDL(sql string, params ...interface{}) (err error)
+	Exec(sum key.Sum, sql string, params ...interface{}) (err error)
+	ExecForResult(sum key.Sum, sql string, params ...interface{}) (sql.Result, error)
+	QueryArray(sum key.Sum, sql string, mapRow MapRow, params ...interface{}) ([]interface{}, error)
+	// QueryIntoArray(resultList interface{}, sum key.Sum,sql string, mapRow MapRow, params ...interface{}) error
+	QueryObject(sum key.Sum, sql string, mapRow MapRow, params ...interface{}) (interface{}, error)
+	Close() error
+	GetDatabaseTemplateBySum(sum key.Sum) (DatabaseTemplate, error)
+}
 
 type DatabaseTemplateImpl struct {
 	Conn *sql.DB
@@ -12,27 +25,8 @@ type DatabaseTemplateImpl struct {
 
 type MapRow func(resultSet *sql.Rows) (object interface{}, err error)
 
-type DatabaseTemplate interface {
-	Query(sql string, mapRow MapRow, params ...interface{}) (object interface{}, err error)
-	Exec(sql string, params ...interface{}) (err error)
-	ExecForResult(sql string, params ...interface{}) (sql.Result, error)
-	QueryArray(sql string, mapRow MapRow, params ...interface{}) ([]interface{}, error)
-	QueryIntoArray(resultList interface{}, sql string, mapRow MapRow, params ...interface{}) error
-	QueryObject(sql string, mapRow MapRow, params ...interface{}) (interface{}, error)
-	Close() error
-	IsConnOk() bool
-	GetConn() *sql.DB
-}
-
-func (this *DatabaseTemplateImpl) GetConn() *sql.DB {
-	return this.Conn
-}
-
-func (this *DatabaseTemplateImpl) IsConnOk() (ok bool) {
-	if this.Conn == nil {
-		return false
-	}
-	return this.Conn.Ping() == nil
+func (this *DatabaseTemplateImpl) GetDatabaseTemplateBySum(s key.Sum) (DatabaseTemplate, error) {
+	return this, nil
 }
 func (this *DatabaseTemplateImpl) Close() (err error) {
 	if this.Conn == nil {
@@ -42,30 +36,31 @@ func (this *DatabaseTemplateImpl) Close() (err error) {
 	this.Conn = nil
 	return
 }
-func (this *DatabaseTemplateImpl) Query(sql string, mapRow MapRow, params ...interface{}) (object interface{}, err error) {
-	result, error := this.Conn.Query(sql, params...)
-	d := func() {
-		if result != nil {
-			result.Close()
-		}
-	}
-	defer d()
-	if error != nil {
-		err = error
-		return nil, error
-	}
-	if result == nil {
-		return nil, error
-	}
-	if result.Next() {
-		object, err = mapRow(result)
-	} else {
-		return nil, nil
-	}
-	return
-}
 
-func (this *DatabaseTemplateImpl) QueryArray(sql string, mapRow MapRow, params ...interface{}) ([]interface{}, error) {
+// func (this *DatabaseTemplateImpl) Query(sql string, mapRow MapRow, params ...interface{}) (object interface{}, err error) {
+// 	result, error := this.Conn.Query(sql, params...)
+// 	d := func() {
+// 		if result != nil {
+// 			result.Close()
+// 		}
+// 	}
+// 	defer d()
+// 	if error != nil {
+// 		err = error
+// 		return nil, error
+// 	}
+// 	if result == nil {
+// 		return nil, error
+// 	}
+// 	if result.Next() {
+// 		object, err = mapRow(result)
+// 	} else {
+// 		return nil, nil
+// 	}
+// 	return
+// }
+
+func (this *DatabaseTemplateImpl) QueryArray(sum key.Sum, sql string, mapRow MapRow, params ...interface{}) ([]interface{}, error) {
 	result, err := this.Conn.Query(sql, params...)
 	d := func() {
 		if result != nil {
@@ -90,63 +85,63 @@ func (this *DatabaseTemplateImpl) QueryArray(sql string, mapRow MapRow, params .
 	return resArray, nil
 }
 
-func (this *DatabaseTemplateImpl) QueryIntoArray(resultList interface{}, sql string, mapRow MapRow, params ...interface{}) error {
-	pointerElements := true
-	t, err := toType(resultList)
-	if err != nil {
-		var err2 error
-		if t, err2 = toSliceType(resultList); t == nil {
-			if err2 != nil {
-				return err2
-			}
-			return err
-		}
-		pointerElements = t.Kind() == reflect.Ptr
-		if pointerElements {
-			t = t.Elem()
-		}
-	}
-	sliceValue := reflect.Indirect(reflect.ValueOf(resultList))
-	result, err := this.Conn.Query(sql, params...)
-	d := func() {
-		if result != nil {
-			result.Close()
-		}
-	}
-	defer d()
-	if err != nil {
-		return err
-	}
-	if result == nil {
-		return nil
-	}
-	for result.Next() {
-		v, err := mapRow(result)
-		if err != nil {
-			return err
-		}
-		if pointerElements {
-			if reflect.TypeOf(v).Kind() == reflect.Ptr {
-				value := reflect.ValueOf(v)
-				sliceValue.Set(reflect.Append(sliceValue, value))
-			} else {
-				return fmt.Errorf("can't get struct to pointer array")
-			}
-		} else {
-			if reflect.TypeOf(v).Kind() != reflect.Ptr {
-				sliceValue.Set(reflect.Append(sliceValue, reflect.ValueOf(v)))
-			} else {
-				return fmt.Errorf("can't get pointer to struct array")
-			}
-		}
-	}
-	if sliceValue.IsNil() {
-		sliceValue.Set(reflect.MakeSlice(sliceValue.Type(), 0, 0))
-	}
-	return nil
-}
+// func (this *DatabaseTemplateImpl) QueryIntoArray(resultList interface{}, sql string, mapRow MapRow, params ...interface{}) error {
+// 	pointerElements := true
+// 	t, err := toType(resultList)
+// 	if err != nil {
+// 		var err2 error
+// 		if t, err2 = toSliceType(resultList); t == nil {
+// 			if err2 != nil {
+// 				return err2
+// 			}
+// 			return err
+// 		}
+// 		pointerElements = t.Kind() == reflect.Ptr
+// 		if pointerElements {
+// 			t = t.Elem()
+// 		}
+// 	}
+// 	sliceValue := reflect.Indirect(reflect.ValueOf(resultList))
+// 	result, err := this.Conn.Query(sql, params...)
+// 	d := func() {
+// 		if result != nil {
+// 			result.Close()
+// 		}
+// 	}
+// 	defer d()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	if result == nil {
+// 		return nil
+// 	}
+// 	for result.Next() {
+// 		v, err := mapRow(result)
+// 		if err != nil {
+// 			return err
+// 		}
+// 		if pointerElements {
+// 			if reflect.TypeOf(v).Kind() == reflect.Ptr {
+// 				value := reflect.ValueOf(v)
+// 				sliceValue.Set(reflect.Append(sliceValue, value))
+// 			} else {
+// 				return fmt.Errorf("can't get struct to pointer array")
+// 			}
+// 		} else {
+// 			if reflect.TypeOf(v).Kind() != reflect.Ptr {
+// 				sliceValue.Set(reflect.Append(sliceValue, reflect.ValueOf(v)))
+// 			} else {
+// 				return fmt.Errorf("can't get pointer to struct array")
+// 			}
+// 		}
+// 	}
+// 	if sliceValue.IsNil() {
+// 		sliceValue.Set(reflect.MakeSlice(sliceValue.Type(), 0, 0))
+// 	}
+// 	return nil
+// }
 
-func (this *DatabaseTemplateImpl) QueryObject(sql string, mapRow MapRow, params ...interface{}) (interface{}, error) {
+func (this *DatabaseTemplateImpl) QueryObject(sum key.Sum, sql string, mapRow MapRow, params ...interface{}) (interface{}, error) {
 	result, error := this.Conn.Query(sql, params...)
 	d := func() {
 		if result != nil {
@@ -167,7 +162,7 @@ func (this *DatabaseTemplateImpl) QueryObject(sql string, mapRow MapRow, params 
 	return nil, nil
 }
 
-func (this *DatabaseTemplateImpl) Exec(sql string, params ...interface{}) (err error) {
+func (this *DatabaseTemplateImpl) Exec(sum key.Sum, sql string, params ...interface{}) (err error) {
 	_, error := this.Conn.Exec(sql, params...)
 	if error != nil {
 		err = error
@@ -175,7 +170,16 @@ func (this *DatabaseTemplateImpl) Exec(sql string, params ...interface{}) (err e
 	return
 }
 
-func (this *DatabaseTemplateImpl) ExecForResult(sql string, params ...interface{}) (sql.Result, error) {
+func (this *DatabaseTemplateImpl) ExecDDL(sql string, params ...interface{}) (err error) {
+	_, error := this.Conn.Exec(sql, params...)
+	if error != nil {
+		err = error
+	}
+
+	return
+}
+
+func (this *DatabaseTemplateImpl) ExecForResult(sum key.Sum, sql string, params ...interface{}) (sql.Result, error) {
 	result, error := this.Conn.Exec(sql, params...)
 	return result, error
 }

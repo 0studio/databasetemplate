@@ -12,6 +12,31 @@ type DBConfig struct {
 	Name string
 }
 
+func NewDatabaseTemplateWithConfig(dbConfig DBConfig, debug bool) (dt DatabaseTemplate, ok bool) {
+	var db *sql.DB
+	db, ok = NewDBInstance(dbConfig, debug)
+	if !ok {
+		return
+	}
+	return &DatabaseTemplateImpl{db}, ok
+
+}
+func NewDatabaseTemplateSplitWithConfig(dbConfig DBConfig, splitDBCount int, debug bool) (splitDT DatabaseTemplate, ok bool) {
+	var dtList []DatabaseTemplate = make([]DatabaseTemplate, splitDBCount)
+	dbNamePrefix := dbConfig.Name
+
+	for i := 0; i < splitDBCount; i++ {
+		dbConfig.Name = fmt.Sprintf("%s_%d", dbNamePrefix, i)
+		dtList[i], ok = NewDatabaseTemplateWithConfig(dbConfig, debug)
+		if !ok {
+			return
+		}
+	}
+	return
+}
+func NewDatabaseTemplate(db *sql.DB) (dt DatabaseTemplate) {
+	return &DatabaseTemplateImpl{db}
+}
 func NewDBInstance(dbConfig DBConfig, debug bool) (db *sql.DB, ok bool) {
 	var (
 		dbToken string
