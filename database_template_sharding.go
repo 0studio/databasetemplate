@@ -37,42 +37,47 @@ func (this *DatabaseTemplateImplShardingImpl) Close() (err error) {
 	}
 	return
 }
-func (this *DatabaseTemplateImplShardingImpl) GetDatabaseTemplateBySum(s key.Sum) (DatabaseTemplate, error) {
+func (this *DatabaseTemplateImplShardingImpl) GetDatabaseTemplateBySum(s key.Sum) (DatabaseTemplate, int, error) {
 	if len(this.dtList) == 0 {
-		return nil, errors.New("empty_datatemplate_list")
+		return nil, 0, errors.New("empty_datatemplate_list")
 	}
 
 	idx := s.ToSum() % len(this.dtList)
-	return this.dtList[idx], nil
+	return this.dtList[idx], idx, nil
 }
 func (this *DatabaseTemplateImplShardingImpl) QueryArray(sum key.Sum, sql string, mapRow MapRow, params ...interface{}) (list []interface{}, err error) {
 	var dt DatabaseTemplate
-	if sum == nil { // 从所有库查询
-		for _, dt = range this.dtList {
-			tmpList, e := dt.QueryArray(sum, sql, mapRow, params...)
-			if e != nil {
-				err = e
-				continue
-			}
-			list = append(list, tmpList...)
-		}
+	if sum == nil { // 占不支持从所有库查询
+		// for _, dt = range this.dtList {
+		// 	tmpList, e := dt.QueryArray(sum, sql, mapRow, params...)
+		// 	if e != nil {
+		// 		err = e
+		// 		continue
+		// 	}
+		// 	list = append(list, tmpList...)
+		// }
 		return
 	}
 	if sum.SumLen() == 1 {
-		dt, err = this.GetDatabaseTemplateBySum(sum)
+		dt, _, err = this.GetDatabaseTemplateBySum(sum)
 		if err != nil {
 			return
 		}
 		list, err = dt.QueryArray(sum, sql, mapRow, params...)
 		return
 	}
+	var dtIdxMap map[int]DatabaseTemplate = make(map[int]DatabaseTemplate)
+	var dtIdx int
 	for idx := 0; idx < sum.SumLen(); idx++ {
 		subSum := sum.GetSumByIdx(idx)
-		dt, err = this.GetDatabaseTemplateBySum(subSum)
+		dt, dtIdx, err = this.GetDatabaseTemplateBySum(subSum)
 		if err != nil {
 			return
 		}
-		tmpList, e := dt.QueryArray(sum, sql, mapRow, params...)
+		dtIdxMap[dtIdx] = dt
+	}
+	for _, dt := range dtIdxMap {
+		tmpList, e := dt.QueryArray(nil, sql, mapRow, params...)
 		if e != nil {
 			err = e
 			continue
@@ -99,7 +104,7 @@ func (this *DatabaseTemplateImplShardingImpl) QueryObject(sum key.Sum, sql strin
 	}
 
 	if sum.SumLen() == 1 {
-		dt, err = this.GetDatabaseTemplateBySum(sum)
+		dt, _, err = this.GetDatabaseTemplateBySum(sum)
 		if err != nil {
 			return
 		}
@@ -122,7 +127,7 @@ func (this *DatabaseTemplateImplShardingImpl) Exec(sum key.Sum, sql string, para
 	}
 
 	if sum.SumLen() == 1 {
-		dt, err = this.GetDatabaseTemplateBySum(sum)
+		dt, _, err = this.GetDatabaseTemplateBySum(sum)
 		if err != nil {
 			return
 		}
@@ -133,10 +138,18 @@ func (this *DatabaseTemplateImplShardingImpl) Exec(sum key.Sum, sql string, para
 		return
 	}
 
+	var dtIdxMap map[int]DatabaseTemplate = make(map[int]DatabaseTemplate)
+	var dtIdx int
 	for idx := 0; idx < sum.SumLen(); idx++ {
 		subSum := sum.GetSumByIdx(idx)
-		dt, err = this.GetDatabaseTemplateBySum(subSum)
-		e := dt.Exec(subSum, sql, params...)
+		dt, dtIdx, err = this.GetDatabaseTemplateBySum(subSum)
+		if err != nil {
+			return
+		}
+		dtIdxMap[dtIdx] = dt
+	}
+	for _, dt := range dtIdxMap {
+		e := dt.Exec(nil, sql, params...)
 		if e != nil {
 			err = e
 		}
@@ -147,7 +160,7 @@ func (this *DatabaseTemplateImplShardingImpl) Exec(sum key.Sum, sql string, para
 func (this *DatabaseTemplateImplShardingImpl) ExecForResult(sum key.Sum, sql string, params ...interface{}) (result sql.Result, err error) {
 	var dt DatabaseTemplate
 	if sum.SumLen() == 1 {
-		dt, err = this.GetDatabaseTemplateBySum(sum)
+		dt, _, err = this.GetDatabaseTemplateBySum(sum)
 		if err != nil {
 			return
 		}
