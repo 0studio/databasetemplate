@@ -6,29 +6,29 @@ import (
 	key "github.com/0studio/storage_key"
 )
 
-func NewDatabaseTemplateSplit(dbList []*sql.DB) DatabaseTemplate {
+func NewDatabaseTemplateSharding(dbList []*sql.DB) DatabaseTemplate {
 	var dtList []DatabaseTemplate = make([]DatabaseTemplate, len(dbList))
 	for idx, _ := range dbList {
 		dtList[idx] = &DatabaseTemplateImpl{dbList[idx]}
 	}
-	return &DatabaseTemplateImplSplitImpl{dtList}
+	return &DatabaseTemplateImplShardingImpl{dtList}
 }
 
-type DatabaseTemplateImplSplitImpl struct {
+type DatabaseTemplateImplShardingImpl struct {
 	dtList []DatabaseTemplate
 }
 
-// func (this *DatabaseTemplateImplSplitImpl) GetConn() *sql.DB {
+// func (this *DatabaseTemplateImplShardingImpl) GetConn() *sql.DB {
 // 	return this.Conn
 // }
 
-// func (this *DatabaseTemplateImplSplitImpl) IsConnOk() (ok bool) {
+// func (this *DatabaseTemplateImplShardingImpl) IsConnOk() (ok bool) {
 // 	if this.Conn == nil {
 // 		return false
 // 	}
 // 	return this.Conn.Ping() == nil
 // }
-func (this *DatabaseTemplateImplSplitImpl) Close() (err error) {
+func (this *DatabaseTemplateImplShardingImpl) Close() (err error) {
 	for _, dt := range this.dtList {
 		e := dt.Close()
 		if e != nil {
@@ -37,7 +37,7 @@ func (this *DatabaseTemplateImplSplitImpl) Close() (err error) {
 	}
 	return
 }
-func (this *DatabaseTemplateImplSplitImpl) GetDatabaseTemplateBySum(s key.Sum) (DatabaseTemplate, error) {
+func (this *DatabaseTemplateImplShardingImpl) GetDatabaseTemplateBySum(s key.Sum) (DatabaseTemplate, error) {
 	if len(this.dtList) == 0 {
 		return nil, errors.New("empty_datatemplate_list")
 	}
@@ -45,7 +45,7 @@ func (this *DatabaseTemplateImplSplitImpl) GetDatabaseTemplateBySum(s key.Sum) (
 	idx := s.ToSum() % len(this.dtList)
 	return this.dtList[idx], nil
 }
-func (this *DatabaseTemplateImplSplitImpl) QueryArray(sum key.Sum, sql string, mapRow MapRow, params ...interface{}) (list []interface{}, err error) {
+func (this *DatabaseTemplateImplShardingImpl) QueryArray(sum key.Sum, sql string, mapRow MapRow, params ...interface{}) (list []interface{}, err error) {
 	var dt DatabaseTemplate
 	if sum == nil { // 从所有库查询
 		for _, dt = range this.dtList {
@@ -82,11 +82,11 @@ func (this *DatabaseTemplateImplSplitImpl) QueryArray(sum key.Sum, sql string, m
 	return
 }
 
-// func (this *DatabaseTemplateImplSplitImpl) QueryIntoArray(resultList interface{}, sql string, mapRow MapRow, params ...interface{}) error {
+// func (this *DatabaseTemplateImplShardingImpl) QueryIntoArray(resultList interface{}, sql string, mapRow MapRow, params ...interface{}) error {
 
 // }
 
-func (this *DatabaseTemplateImplSplitImpl) QueryObject(sum key.Sum, sql string, mapRow MapRow, params ...interface{}) (obj interface{}, err error) {
+func (this *DatabaseTemplateImplShardingImpl) QueryObject(sum key.Sum, sql string, mapRow MapRow, params ...interface{}) (obj interface{}, err error) {
 	var dt DatabaseTemplate
 	if sum == nil { // 从所有库查询
 		for _, dt = range this.dtList {
@@ -109,7 +109,7 @@ func (this *DatabaseTemplateImplSplitImpl) QueryObject(sum key.Sum, sql string, 
 	return
 }
 
-func (this *DatabaseTemplateImplSplitImpl) Exec(sum key.Sum, sql string, params ...interface{}) (err error) {
+func (this *DatabaseTemplateImplShardingImpl) Exec(sum key.Sum, sql string, params ...interface{}) (err error) {
 	var dt DatabaseTemplate
 	if sum == nil { // 从所有库查询
 		for _, dt = range this.dtList {
@@ -144,7 +144,7 @@ func (this *DatabaseTemplateImplSplitImpl) Exec(sum key.Sum, sql string, params 
 	return
 }
 
-func (this *DatabaseTemplateImplSplitImpl) ExecForResult(sum key.Sum, sql string, params ...interface{}) (result sql.Result, err error) {
+func (this *DatabaseTemplateImplShardingImpl) ExecForResult(sum key.Sum, sql string, params ...interface{}) (result sql.Result, err error) {
 	var dt DatabaseTemplate
 	if sum.SumLen() == 1 {
 		dt, err = this.GetDatabaseTemplateBySum(sum)
@@ -156,7 +156,7 @@ func (this *DatabaseTemplateImplSplitImpl) ExecForResult(sum key.Sum, sql string
 	}
 	return
 }
-func (this *DatabaseTemplateImplSplitImpl) ExecDDL(sql string, params ...interface{}) (err error) {
+func (this *DatabaseTemplateImplShardingImpl) ExecDDL(sql string, params ...interface{}) (err error) {
 	var dt DatabaseTemplate
 	for _, dt = range this.dtList {
 		e := dt.ExecDDL(sql, params...)

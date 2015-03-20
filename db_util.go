@@ -21,7 +21,7 @@ func NewDatabaseTemplateWithConfig(dbConfig DBConfig, debug bool) (dt DatabaseTe
 	return &DatabaseTemplateImpl{db}, ok
 
 }
-func NewDatabaseTemplateSplitWithConfig(dbConfig DBConfig, splitDBCount int, debug bool) (splitDT DatabaseTemplate, ok bool) {
+func NewDatabaseTemplateShardingWithConfig(dbConfig DBConfig, splitDBCount int, debug bool) (splitDT DatabaseTemplate, ok bool) {
 	var dtList []DatabaseTemplate = make([]DatabaseTemplate, splitDBCount)
 	dbNamePrefix := dbConfig.Name
 

@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestExecSplit(t *testing.T) {
+func TestExecSharding(t *testing.T) {
 	db, err := sql.Open("mysql", "th_dev:th_devpass@/test?charset=utf8")
 	defer db.Close()
 	db.SetMaxIdleConns(10)
@@ -21,7 +21,7 @@ func TestExecSplit(t *testing.T) {
 	if err != nil {
 		return
 	}
-	dbTemplate := NewDatabaseTemplateSplit([]*sql.DB{db, db2})
+	dbTemplate := NewDatabaseTemplateSharding([]*sql.DB{db, db2})
 
 	err = dbTemplate.ExecDDL("create table if not exists test(a int not null ,b varchar(10),primary key(a))")
 	if err != nil {
