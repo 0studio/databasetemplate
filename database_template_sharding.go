@@ -4,12 +4,13 @@ import (
 	"database/sql"
 	"errors"
 	key "github.com/0studio/storage_key"
+	"time"
 )
 
-func NewDatabaseTemplateSharding(dbList []*sql.DB) DatabaseTemplate {
+func NewDatabaseTemplateSharding(dbList []*sql.DB, keepAliveInterval time.Duration) DatabaseTemplate {
 	var dtList []DatabaseTemplate = make([]DatabaseTemplate, len(dbList))
 	for idx, _ := range dbList {
-		dtList[idx] = &DatabaseTemplateImpl{dbList[idx]}
+		dtList[idx] = NewDatabaseTemplateImpl(dbList[idx], keepAliveInterval)
 	}
 	return &DatabaseTemplateImplShardingImpl{dtList}
 }

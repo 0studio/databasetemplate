@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/0studio/storage_key"
 	"reflect"
+	"time"
 )
 
 type DatabaseTemplate interface {
@@ -21,23 +22,46 @@ type DatabaseTemplate interface {
 	IsSharding() bool
 }
 
-type DatabaseTemplateImpl struct {
-	Conn *sql.DB
+type databaseTemplateImpl struct {
+	Conn      *sql.DB
+	keepAlive time.Duration
+}
+
+// if keepAliveInterval>0 keep it alive
+func NewDatabaseTemplateImpl(db *sql.DB, keepAliveInterval time.Duration) DatabaseTemplate {
+	dt := &databaseTemplateImpl{
+		Conn:      db,
+		keepAlive: keepAliveInterval,
+	}
+	if keepAliveInterval > 0 {
+		go func() {
+			for {
+				select {
+				case <-time.After(keepAliveInterval):
+					if dt.Conn != nil {
+						dt.Exec(nil, "select 1")
+					}
+				}
+			}
+		}()
+	}
+
+	return dt
 }
 
 type MapRow func(resultSet *sql.Rows) (object interface{}, err error)
 
-func (this *DatabaseTemplateImpl) IsSharding() bool {
+func (this *databaseTemplateImpl) IsSharding() bool {
 	return false
 }
-func (this *DatabaseTemplateImpl) GetDatabaseTemplateBySum(s key.Sum) (DatabaseTemplate, int, error) {
+func (this *databaseTemplateImpl) GetDatabaseTemplateBySum(s key.Sum) (DatabaseTemplate, int, error) {
 	return this, 0, nil
 }
-func (this *DatabaseTemplateImpl) GetDatabaseTemplateByIdx(idx int) (DatabaseTemplate, error) {
+func (this *databaseTemplateImpl) GetDatabaseTemplateByIdx(idx int) (DatabaseTemplate, error) {
 	return this, nil
 }
 
-func (this *DatabaseTemplateImpl) Close() (err error) {
+func (this *databaseTemplateImpl) Close() (err error) {
 	if this.Conn == nil {
 		return nil
 	}
@@ -46,7 +70,7 @@ func (this *DatabaseTemplateImpl) Close() (err error) {
 	return
 }
 
-// func (this *DatabaseTemplateImpl) Query(sql string, mapRow MapRow, params ...interface{}) (object interface{}, err error) {
+// func (this *databaseTemplateImpl) Query(sql string, mapRow MapRow, params ...interface{}) (object interface{}, err error) {
 // 	result, error := this.Conn.Query(sql, params...)
 // 	d := func() {
 // 		if result != nil {
@@ -69,7 +93,7 @@ func (this *DatabaseTemplateImpl) Close() (err error) {
 // 	return
 // }
 
-func (this *DatabaseTemplateImpl) QueryArray(sum key.Sum, sql string, mapRow MapRow, params ...interface{}) ([]interface{}, error) {
+func (this *databaseTemplateImpl) QueryArray(sum key.Sum, sql string, mapRow MapRow, params ...interface{}) ([]interface{}, error) {
 	result, err := this.Conn.Query(sql, params...)
 	d := func() {
 		if result != nil {
@@ -94,7 +118,7 @@ func (this *DatabaseTemplateImpl) QueryArray(sum key.Sum, sql string, mapRow Map
 	return resArray, nil
 }
 
-// func (this *DatabaseTemplateImpl) QueryIntoArray(resultList interface{}, sql string, mapRow MapRow, params ...interface{}) error {
+// func (this *databaseTemplateImpl) QueryIntoArray(resultList interface{}, sql string, mapRow MapRow, params ...interface{}) error {
 // 	pointerElements := true
 // 	t, err := toType(resultList)
 // 	if err != nil {
@@ -150,7 +174,7 @@ func (this *DatabaseTemplateImpl) QueryArray(sum key.Sum, sql string, mapRow Map
 // 	return nil
 // }
 
-func (this *DatabaseTemplateImpl) QueryObject(sum key.Sum, sql string, mapRow MapRow, params ...interface{}) (interface{}, error) {
+func (this *databaseTemplateImpl) QueryObject(sum key.Sum, sql string, mapRow MapRow, params ...interface{}) (interface{}, error) {
 	result, error := this.Conn.Query(sql, params...)
 	d := func() {
 		if result != nil {
@@ -171,7 +195,7 @@ func (this *DatabaseTemplateImpl) QueryObject(sum key.Sum, sql string, mapRow Ma
 	return nil, nil
 }
 
-func (this *DatabaseTemplateImpl) Exec(sum key.Sum, sql string, params ...interface{}) (err error) {
+func (this *databaseTemplateImpl) Exec(sum key.Sum, sql string, params ...interface{}) (err error) {
 	_, error := this.Conn.Exec(sql, params...)
 	if error != nil {
 		err = error
@@ -179,7 +203,7 @@ func (this *DatabaseTemplateImpl) Exec(sum key.Sum, sql string, params ...interf
 	return
 }
 
-func (this *DatabaseTemplateImpl) ExecDDL(sql string, params ...interface{}) (err error) {
+func (this *databaseTemplateImpl) ExecDDL(sql string, params ...interface{}) (err error) {
 	_, error := this.Conn.Exec(sql, params...)
 	if error != nil {
 		err = error
@@ -188,7 +212,7 @@ func (this *DatabaseTemplateImpl) ExecDDL(sql string, params ...interface{}) (er
 	return
 }
 
-func (this *DatabaseTemplateImpl) ExecForResult(sum key.Sum, sql string, params ...interface{}) (sql.Result, error) {
+func (this *databaseTemplateImpl) ExecForResult(sum key.Sum, sql string, params ...interface{}) (sql.Result, error) {
 	result, error := this.Conn.Exec(sql, params...)
 	return result, error
 }

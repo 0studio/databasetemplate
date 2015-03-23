@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"testing"
+	"time"
 )
 
 type Test struct {
@@ -18,7 +19,7 @@ func TestExec(t *testing.T) {
 	if err != nil {
 		return
 	}
-	dbTemplate := &DatabaseTemplateImpl{db}
+	dbTemplate := NewDatabaseTemplateImpl(db, time.Millisecond)
 	err = dbTemplate.Exec(nil, "create table if not exists test(a int not null AUTO_INCREMENT,b varchar(10),primary key(a))")
 	if err != nil {
 		t.Error("can't get from db", err)

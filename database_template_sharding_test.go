@@ -21,7 +21,7 @@ func TestExecSharding(t *testing.T) {
 	if err != nil {
 		return
 	}
-	dbTemplate := NewDatabaseTemplateSharding([]*sql.DB{db, db2})
+	dbTemplate := NewDatabaseTemplateSharding([]*sql.DB{db, db2}, 0)
 
 	err = dbTemplate.ExecDDL("create table if not exists test(a int not null ,b varchar(10),primary key(a))")
 	if err != nil {
