@@ -16,9 +16,11 @@ type DatabaseTemplate interface {
 	// QueryIntoArray(resultList interface{}, sum key.Sum,sql string, mapRow MapRow, params ...interface{}) error
 	QueryObject(sum key.Sum, sql string, mapRow MapRow, params ...interface{}) (interface{}, error)
 	Close() error
-	GetDatabaseTemplateBySum(sum key.Sum) (DatabaseTemplate, int, error)
-	GetDatabaseTemplateByIdx(idx int) (DatabaseTemplate, error)
+	GetDatabaseTemplateShardingBySum(sum key.Sum) (DatabaseTemplate, int, error)
+	GetDatabaseTemplateByShardingIdx(idx int) (DatabaseTemplate, error)
 	IsSharding() bool
+	GetWriteDatabaseTemplate() DatabaseTemplate
+	GetReadDatabaseTemplate() DatabaseTemplate
 }
 
 type DatabaseTemplateImpl struct {
@@ -27,13 +29,20 @@ type DatabaseTemplateImpl struct {
 
 type MapRow func(resultSet *sql.Rows) (object interface{}, err error)
 
+func (this *DatabaseTemplateImpl) GetReadDatabaseTemplate() DatabaseTemplate {
+	return this
+}
+func (this *DatabaseTemplateImpl) GetWriteDatabaseTemplate() DatabaseTemplate {
+	return this
+}
+
 func (this *DatabaseTemplateImpl) IsSharding() bool {
 	return false
 }
-func (this *DatabaseTemplateImpl) GetDatabaseTemplateBySum(s key.Sum) (DatabaseTemplate, int, error) {
+func (this *DatabaseTemplateImpl) GetDatabaseTemplateShardingBySum(s key.Sum) (DatabaseTemplate, int, error) {
 	return this, 0, nil
 }
-func (this *DatabaseTemplateImpl) GetDatabaseTemplateByIdx(idx int) (DatabaseTemplate, error) {
+func (this *DatabaseTemplateImpl) GetDatabaseTemplateByShardingIdx(idx int) (DatabaseTemplate, error) {
 	return this, nil
 }
 

@@ -37,17 +37,25 @@ func (this *DatabaseTemplateImplShardingImpl) Close() (err error) {
 	}
 	return
 }
+
+func (this *DatabaseTemplateImplShardingImpl) GetReadDatabaseTemplate() DatabaseTemplate {
+	return this
+}
+func (this *DatabaseTemplateImplShardingImpl) GetWriteDatabaseTemplate() DatabaseTemplate {
+	return this
+}
+
 func (this *DatabaseTemplateImplShardingImpl) IsSharding() bool {
 	return true
 }
-func (this *DatabaseTemplateImplShardingImpl) GetDatabaseTemplateByIdx(idx int) (DatabaseTemplate, error) {
+func (this *DatabaseTemplateImplShardingImpl) GetDatabaseTemplateByShardingIdx(idx int) (DatabaseTemplate, error) {
 	if idx >= len(this.dtList) {
 		return nil, errors.New("datatemplate_idx_overflow")
 	}
 
 	return this.dtList[idx], nil
 }
-func (this *DatabaseTemplateImplShardingImpl) GetDatabaseTemplateBySum(s key.Sum) (DatabaseTemplate, int, error) {
+func (this *DatabaseTemplateImplShardingImpl) GetDatabaseTemplateShardingBySum(s key.Sum) (DatabaseTemplate, int, error) {
 	if len(this.dtList) == 0 {
 		return nil, 0, errors.New("empty_datatemplate_list")
 	}
@@ -69,7 +77,7 @@ func (this *DatabaseTemplateImplShardingImpl) QueryArray(sum key.Sum, sql string
 		return
 	}
 	if sum.SumLen() == 1 {
-		dt, _, err = this.GetDatabaseTemplateBySum(sum)
+		dt, _, err = this.GetDatabaseTemplateShardingBySum(sum)
 		if err != nil {
 			return
 		}
@@ -80,7 +88,7 @@ func (this *DatabaseTemplateImplShardingImpl) QueryArray(sum key.Sum, sql string
 	var dtIdx int
 	for idx := 0; idx < sum.SumLen(); idx++ {
 		subSum := sum.GetSumByIdx(idx)
-		dt, dtIdx, err = this.GetDatabaseTemplateBySum(subSum)
+		dt, dtIdx, err = this.GetDatabaseTemplateShardingBySum(subSum)
 		if err != nil {
 			return
 		}
@@ -114,7 +122,7 @@ func (this *DatabaseTemplateImplShardingImpl) QueryObject(sum key.Sum, sql strin
 	}
 
 	if sum.SumLen() == 1 {
-		dt, _, err = this.GetDatabaseTemplateBySum(sum)
+		dt, _, err = this.GetDatabaseTemplateShardingBySum(sum)
 		if err != nil {
 			return
 		}
@@ -137,7 +145,7 @@ func (this *DatabaseTemplateImplShardingImpl) Exec(sum key.Sum, sql string, para
 	}
 
 	if sum.SumLen() == 1 {
-		dt, _, err = this.GetDatabaseTemplateBySum(sum)
+		dt, _, err = this.GetDatabaseTemplateShardingBySum(sum)
 		if err != nil {
 			return
 		}
@@ -152,7 +160,7 @@ func (this *DatabaseTemplateImplShardingImpl) Exec(sum key.Sum, sql string, para
 	var dtIdx int
 	for idx := 0; idx < sum.SumLen(); idx++ {
 		subSum := sum.GetSumByIdx(idx)
-		dt, dtIdx, err = this.GetDatabaseTemplateBySum(subSum)
+		dt, dtIdx, err = this.GetDatabaseTemplateShardingBySum(subSum)
 		if err != nil {
 			return
 		}
@@ -170,7 +178,7 @@ func (this *DatabaseTemplateImplShardingImpl) Exec(sum key.Sum, sql string, para
 func (this *DatabaseTemplateImplShardingImpl) ExecForResult(sum key.Sum, sql string, params ...interface{}) (result sql.Result, err error) {
 	var dt DatabaseTemplate
 	if sum.SumLen() == 1 {
-		dt, _, err = this.GetDatabaseTemplateBySum(sum)
+		dt, _, err = this.GetDatabaseTemplateShardingBySum(sum)
 		if err != nil {
 			return
 		}
