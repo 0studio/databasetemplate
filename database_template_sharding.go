@@ -58,14 +58,14 @@ func (this *DatabaseTemplateImplShardingImpl) GetDatabaseTemplateBySum(s key.Sum
 func (this *DatabaseTemplateImplShardingImpl) QueryArray(sum key.Sum, sql string, mapRow MapRow, params ...interface{}) (list []interface{}, err error) {
 	var dt DatabaseTemplate
 	if sum == nil { // 占不支持从所有库查询
-		// for _, dt = range this.dtList {
-		// 	tmpList, e := dt.QueryArray(sum, sql, mapRow, params...)
-		// 	if e != nil {
-		// 		err = e
-		// 		continue
-		// 	}
-		// 	list = append(list, tmpList...)
-		// }
+		for _, dt = range this.dtList {
+			tmpList, e := dt.QueryArray(sum, sql, mapRow, params...)
+			if e != nil {
+				err = e
+				continue
+			}
+			list = append(list, tmpList...)
+		}
 		return
 	}
 	if sum.SumLen() == 1 {
