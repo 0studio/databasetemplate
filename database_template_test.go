@@ -19,6 +19,10 @@ func TestExec(t *testing.T) {
 		return
 	}
 	dbTemplate := &DatabaseTemplateImpl{db}
+	err = dbTemplate.Exec(nil, "drop table if exists test")
+	if err != nil {
+		t.Error("can't get from db", err)
+	}
 	err = dbTemplate.Exec(nil, "create table if not exists test(a int not null AUTO_INCREMENT,b varchar(10),primary key(a))")
 	if err != nil {
 		t.Error("can't get from db", err)
@@ -38,10 +42,10 @@ func TestExec(t *testing.T) {
 	if err != nil {
 		t.Error("can't get from db", err)
 	}
-	err = dbTemplate.Exec(nil, "truncate table test")
-	if err != nil {
-		t.Error("can't get from db", err)
-	}
+	// err = dbTemplate.Exec(nil, "truncate table test")
+	// if err != nil {
+	// 	t.Error("can't get from db", err)
+	// }
 
 	// mapRow := func(resultSet *sql.Rows) (object interface{}, err error) {
 	// 	t := Test{}

@@ -23,6 +23,10 @@ func TestExecSharding(t *testing.T) {
 	}
 	dbTemplate := NewDatabaseTemplateSharding([]*sql.DB{db, db2})
 
+	err = dbTemplate.ExecDDL("drop table if exists test")
+	if err != nil {
+		t.Error("can't get from db", err)
+	}
 	err = dbTemplate.ExecDDL("create table if not exists test(a int not null ,b varchar(10),primary key(a))")
 	if err != nil {
 		t.Error("can't get from db", err)
