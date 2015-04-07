@@ -46,6 +46,10 @@ func ParseShardingConfig(jsonString string) (shardingConfig ShardingConfig, ok b
 		return
 	}
 	// 用来保证 用来做sharding 的mysql 个数与配置的个数相同， 避免在连接mysql的过程中有连接失败导致sharding 不一致
+	if shardingConfig.MasterListLength != len(shardingConfig.MasterList) {
+		fmt.Println("sharding_length != actual sharding lenght ")
+	}
+
 	ok = shardingConfig.MasterListLength == len(shardingConfig.MasterList)
 	return
 
