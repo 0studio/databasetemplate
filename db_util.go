@@ -31,7 +31,7 @@ type ShardingConfig struct {
 func ParseMasterSlaveConfig(jsonString string) (masterSlaveConfig MasterSlaveConfig, ok bool) {
 	err := json.Unmarshal([]byte(jsonString), &masterSlaveConfig)
 	if err != nil {
-		fmt.Println("parse_shardingConfig_json_error", err)
+		fmt.Println("parse_master_slave_config_json_error", err)
 		return
 	}
 
