@@ -6,9 +6,9 @@ import (
 	"testing"
 )
 
-func TestNewMasterSlaveConfig(t *testing.T) {
+func TestParseMasterSlaveConfig(t *testing.T) {
 	jsonStr := `{"master":{"user":"th_dev","passwd":"th_devpass","database":"tapalliance_1_1","host":"localhost"},"slave":[]}`
-	masterSlaveConfig, ok := NewMasterSlaveConfig(jsonStr)
+	masterSlaveConfig, ok := ParseMasterSlaveConfig(jsonStr)
 	assert.True(t, ok)
 	assert.NotEmpty(t, masterSlaveConfig.Master.Host)
 	fmt.Println(masterSlaveConfig.Master.Host)
@@ -17,7 +17,7 @@ func TestNewMasterSlaveConfig(t *testing.T) {
 
 func TestNewMasterSlaveConfig2(t *testing.T) {
 	jsonStr := `{"master":{"user":"th_dev","passwd":"th_devpass","database":"tapalliance_1_1","host":"localhost"},"slave":[{"user":"th_dev","passwd":"th_devpass","database":"tapalliance_1_1","host":"localhost"},{"user":"th_dev","passwd":"th_devpass","database":"tapalliance_1_1","host":"localhost"}]}`
-	masterSlaveConfig, ok := NewMasterSlaveConfig(jsonStr)
+	masterSlaveConfig, ok := ParseMasterSlaveConfig(jsonStr)
 	assert.True(t, ok)
 	assert.NotEmpty(t, masterSlaveConfig.Master.Host)
 	fmt.Println(masterSlaveConfig.Master.Host)
@@ -25,9 +25,9 @@ func TestNewMasterSlaveConfig2(t *testing.T) {
 
 }
 
-func TestNewShardingConfig(t *testing.T) {
+func TestParseShardingConfig(t *testing.T) {
 	jsonStr := `{"sharding_length":1,"sharding":[{"master":{"user":"th_dev","passwd":"th_devpass","database":"tapalliance_1_1","host":"localhost"},"slave":[]}]}`
-	config, ok := NewShardingConfig(jsonStr)
+	config, ok := ParseShardingConfig(jsonStr)
 	assert.True(t, ok)
 	assert.Equal(t, 1, len(config.MasterList))
 	assert.Equal(t, config.MasterListLength, len(config.MasterList))

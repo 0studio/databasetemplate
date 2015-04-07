@@ -28,7 +28,7 @@ type ShardingConfig struct {
 	MasterListLength int                 `json:"sharding_length,omitempty"`
 }
 
-func NewMasterSlaveConfig(jsonString string) (masterSlaveConfig MasterSlaveConfig, ok bool) {
+func ParseMasterSlaveConfig(jsonString string) (masterSlaveConfig MasterSlaveConfig, ok bool) {
 	err := json.Unmarshal([]byte(jsonString), &masterSlaveConfig)
 	if err != nil {
 		fmt.Println("parse_shardingConfig_json_error", err)
@@ -39,7 +39,7 @@ func NewMasterSlaveConfig(jsonString string) (masterSlaveConfig MasterSlaveConfi
 	return
 
 }
-func NewShardingConfig(jsonString string) (shardingConfig ShardingConfig, ok bool) {
+func ParseShardingConfig(jsonString string) (shardingConfig ShardingConfig, ok bool) {
 	err := json.Unmarshal([]byte(jsonString), &shardingConfig)
 	if err != nil {
 		fmt.Println("parse_shardingConfig_json_error", err)
