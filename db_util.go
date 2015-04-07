@@ -61,7 +61,7 @@ func NewDatabaseTemplateShardingWithConfig(shardingConfig ShardingConfig, debug 
 				return
 			}
 		} else {
-			dtList[i], ok = NewRWDatabaseTemplateWithConfig(shardingConfig.MasterList[i], debug)
+			dtList[i], ok = NewDatabaseTemplateRWWithConfig(shardingConfig.MasterList[i], debug)
 			if !ok {
 				return
 			}
@@ -71,7 +71,7 @@ func NewDatabaseTemplateShardingWithConfig(shardingConfig ShardingConfig, debug 
 	}
 	return &DatabaseTemplateImplShardingImpl{dtList}, true
 }
-func NewRWDatabaseTemplateWithConfig(config MasterSlaveConfig, debug bool) (dt DatabaseTemplate, ok bool) {
+func NewDatabaseTemplateRWWithConfig(config MasterSlaveConfig, debug bool) (dt DatabaseTemplate, ok bool) {
 	var masterDT DatabaseTemplate
 	var slaveDTList []DatabaseTemplate = make([]DatabaseTemplate, config.SlaveListLength())
 	masterDT, ok = NewDatabaseTemplateWithConfig(config.Master, debug)
