@@ -48,6 +48,10 @@ func (this *DatabaseTemplateImplShardingImpl) GetWriteDatabaseTemplate() Databas
 func (this *DatabaseTemplateImplShardingImpl) IsSharding() bool {
 	return true
 }
+func (this *DatabaseTemplateImplShardingImpl) GetShardingCount() int {
+	return len(this.dtList)
+}
+
 func (this *DatabaseTemplateImplShardingImpl) GetDatabaseTemplateByShardingIdx(idx int) (DatabaseTemplate, error) {
 	if idx >= len(this.dtList) {
 		return nil, errors.New("datatemplate_idx_overflow")
