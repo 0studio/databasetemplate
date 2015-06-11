@@ -8,11 +8,13 @@ import (
 )
 
 type DBConfig struct {
-	Host string `json:"host,omitempty"`
-	User string `json:"user,omitempty"`
-	Pass string `json:"passwd,omitempty"`
-	Name string `json:"database,omitempty"`
-	Port string `json:"port,omitempty"`
+	Host         string `json:"host,omitempty"`
+	User         string `json:"user,omitempty"`
+	Pass         string `json:"passwd,omitempty"`
+	Name         string `json:"database,omitempty"`
+	Port         string `json:"port,omitempty"`
+	MaxOpenConns int    `json:"max_open_conns,omitempty"`
+	MaxIdleConns int    `json:"max_idle_conns,omitempty"`
 }
 type MasterSlaveConfig struct {
 	Master    DBConfig   `json:"master,omitempty"`
@@ -119,7 +121,7 @@ func NewDBInstance(dbConfig DBConfig, debug bool) (db *sql.DB, ok bool) {
 	}
 
 	dbToken = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=true&loc=Local&tls=false&timeout=1m", dbConfig.User, dbConfig.Pass, dbConfig.Host, dbConfig.Port, dbConfig.Name)
-	Log = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=true&loc=Local&tls=false&timeout=1m\n", dbConfig.User, "password", dbConfig.Host, dbConfig.Port, dbConfig.Name)
+	Log = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=true&loc=Local&tls=false&timeout=1m maxOpenConns=%d,maxIdleConns=%d\n", dbConfig.User, "password", dbConfig.Host, dbConfig.Port, dbConfig.Name, dbConfig.MaxOpenConns, dbConfig.MaxIdleConns)
 	db, err = sql.Open("mysql", dbToken)
 	if err != nil {
 		fmt.Println("error", Log, err)
@@ -134,6 +136,13 @@ func NewDBInstance(dbConfig DBConfig, debug bool) (db *sql.DB, ok bool) {
 		return
 
 	}
+	if dbConfig.MaxOpenConns > 0 {
+		db.SetMaxOpenConns(dbConfig.MaxOpenConns)
+	}
+	if dbConfig.MaxIdleConns > 0 {
+		db.SetMaxIdleConns(dbConfig.MaxIdleConns)
+	}
+
 	if debug {
 		fmt.Print(Log)
 	}
