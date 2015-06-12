@@ -13,8 +13,8 @@ type DBConfig struct {
 	Pass         string `json:"passwd,omitempty"`
 	Name         string `json:"database,omitempty"`
 	Port         string `json:"port,omitempty"`
-	MaxOpenConns int    `json:"max_open_conns,omitempty"`
-	MaxIdleConns int    `json:"max_idle_conns,omitempty"`
+	MaxOpenConns int    `json:"max_active_connections,omitempty"`
+	MaxIdleConns int    `json:"max_idle_connections,omitempty"`
 }
 type MasterSlaveConfig struct {
 	Master    DBConfig   `json:"master,omitempty"`
