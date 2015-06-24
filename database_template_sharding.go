@@ -67,6 +67,12 @@ func (this *DatabaseTemplateImplShardingImpl) GetDatabaseTemplateShardingBySum(s
 	idx := s.ToSum() % len(this.dtList)
 	return this.dtList[idx], idx, nil
 }
+
+type resultChan struct {
+	result []interface{}
+	err    error
+}
+
 func (this *DatabaseTemplateImplShardingImpl) QueryArray(sum key.Sum, sql string, mapRow MapRow, params ...interface{}) (list []interface{}, err error) {
 	var dt DatabaseTemplate
 	if sum == nil { // 占不支持从所有库查询
@@ -98,14 +104,33 @@ func (this *DatabaseTemplateImplShardingImpl) QueryArray(sum key.Sum, sql string
 		}
 		dtIdxMap[dtIdx] = dt
 	}
-	for _, dt := range dtIdxMap {
-		tmpList, e := dt.QueryArray(nil, sql, mapRow, params...)
-		if e != nil {
-			err = e
-			continue
+	if len(dtIdxMap) == 1 {
+		for _, dt := range dtIdxMap {
+			tmpList, e := dt.QueryArray(nil, sql, mapRow, params...)
+			return tmpList, e
 		}
-		list = append(list, tmpList...)
+	} else {
+		resultsChannel := make(chan resultChan, len(dtIdxMap))
+		for _, dt := range dtIdxMap {
+			go func() {
+				tmpList, e := dt.QueryArray(nil, sql, mapRow, params...)
+				// if e != nil {
+				// 	err = e
+				// 	continue
+				// }
+				resultsChannel <- resultChan{tmpList, e}
+			}()
+		}
+		for _, _ = range dtIdxMap {
+			result := <-resultsChannel
+			if result.err != nil {
+				err = result.err
+			} else {
+				list = append(list, result.result...)
+			}
+		}
 	}
+
 	return
 }
 
