@@ -112,14 +112,10 @@ func (this *DatabaseTemplateImplShardingImpl) QueryArray(sum key.Sum, sql string
 	} else {
 		resultsChannel := make(chan resultChan, len(dtIdxMap))
 		for _, dt := range dtIdxMap {
-			go func() {
+			go func(dt DatabaseTemplate, rc chan resultChan, sql string, mapRow MapRow, params ...interface{}) {
 				tmpList, e := dt.QueryArray(nil, sql, mapRow, params...)
-				// if e != nil {
-				// 	err = e
-				// 	continue
-				// }
-				resultsChannel <- resultChan{tmpList, e}
-			}()
+				rc <- resultChan{tmpList, e}
+			}(dt, resultsChannel, sql, mapRow, params...)
 		}
 		for _, _ = range dtIdxMap {
 			result := <-resultsChannel
