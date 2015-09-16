@@ -19,6 +19,7 @@ type DatabaseTemplate interface {
 	GetDatabaseTemplateShardingBySum(sum key.Sum) (DatabaseTemplate, int, error)
 	GetDatabaseTemplateByShardingIdx(idx int) (DatabaseTemplate, error)
 	IsSharding() bool
+	GetShardingCount() int
 	GetWriteDatabaseTemplate() DatabaseTemplate
 	GetReadDatabaseTemplate() DatabaseTemplate
 }
@@ -38,6 +39,9 @@ func (this *DatabaseTemplateImpl) GetWriteDatabaseTemplate() DatabaseTemplate {
 
 func (this *DatabaseTemplateImpl) IsSharding() bool {
 	return false
+}
+func (this *DatabaseTemplateImpl) GetShardingCount() int {
+	return 1
 }
 func (this *DatabaseTemplateImpl) GetDatabaseTemplateShardingBySum(s key.Sum) (DatabaseTemplate, int, error) {
 	return this, 0, nil

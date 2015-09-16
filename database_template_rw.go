@@ -21,6 +21,10 @@ func NewRWDatabaseTemplate(writeDatabaseTemplate DatabaseTemplate, readDatabaseT
 func (this *DatabaseTemplateRWImpl) IsSharding() bool {
 	return false
 }
+func (this *DatabaseTemplateRWImpl) GetShardingCount() int {
+	return 1
+}
+
 func (this *DatabaseTemplateRWImpl) GetDatabaseTemplateShardingBySum(s key.Sum) (DatabaseTemplate, int, error) {
 	return this, 0, nil
 }

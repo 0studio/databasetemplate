@@ -48,6 +48,10 @@ func (this *DatabaseTemplateImplShardingImpl) GetWriteDatabaseTemplate() Databas
 func (this *DatabaseTemplateImplShardingImpl) IsSharding() bool {
 	return true
 }
+func (this *DatabaseTemplateImplShardingImpl) GetShardingCount() int {
+	return len(this.dtList)
+}
+
 func (this *DatabaseTemplateImplShardingImpl) GetDatabaseTemplateByShardingIdx(idx int) (DatabaseTemplate, error) {
 	if idx >= len(this.dtList) {
 		return nil, errors.New("datatemplate_idx_overflow")
@@ -63,6 +67,12 @@ func (this *DatabaseTemplateImplShardingImpl) GetDatabaseTemplateShardingBySum(s
 	idx := s.ToSum() % len(this.dtList)
 	return this.dtList[idx], idx, nil
 }
+
+type resultChan struct {
+	result []interface{}
+	err    error
+}
+
 func (this *DatabaseTemplateImplShardingImpl) QueryArray(sum key.Sum, sql string, mapRow MapRow, params ...interface{}) (list []interface{}, err error) {
 	var dt DatabaseTemplate
 	if sum == nil { // 占不支持从所有库查询
@@ -94,14 +104,29 @@ func (this *DatabaseTemplateImplShardingImpl) QueryArray(sum key.Sum, sql string
 		}
 		dtIdxMap[dtIdx] = dt
 	}
-	for _, dt := range dtIdxMap {
-		tmpList, e := dt.QueryArray(nil, sql, mapRow, params...)
-		if e != nil {
-			err = e
-			continue
+	if len(dtIdxMap) == 1 {
+		for _, dt := range dtIdxMap {
+			tmpList, e := dt.QueryArray(nil, sql, mapRow, params...)
+			return tmpList, e
 		}
-		list = append(list, tmpList...)
+	} else {
+		resultsChannel := make(chan resultChan, len(dtIdxMap))
+		for _, dt := range dtIdxMap {
+			go func(dt DatabaseTemplate, rc chan resultChan, sql string, mapRow MapRow, params ...interface{}) {
+				tmpList, e := dt.QueryArray(nil, sql, mapRow, params...)
+				rc <- resultChan{tmpList, e}
+			}(dt, resultsChannel, sql, mapRow, params...)
+		}
+		for _, _ = range dtIdxMap {
+			result := <-resultsChannel
+			if result.err != nil {
+				err = result.err
+			} else {
+				list = append(list, result.result...)
+			}
+		}
 	}
+
 	return
 }
 
