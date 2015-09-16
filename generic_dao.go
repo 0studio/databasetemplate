@@ -2,7 +2,7 @@ package databasetemplate
 
 import (
 	"fmt"
-	. "github.com/fanngyuan/mcstorage"
+	. "github.com/0studio/mcstorage"
 	"reflect"
 	"strconv"
 	"strings"
