@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -121,7 +122,7 @@ func NewDBInstance(dbConfig DBConfig, debug bool) (db *sql.DB, ok bool) {
 	}
 
 	dbToken = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=true&loc=Local&tls=false&timeout=1m", dbConfig.User, dbConfig.Pass, dbConfig.Host, dbConfig.Port, dbConfig.Name)
-	Log = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=true&loc=Local&tls=false&timeout=1m maxOpenConns=%d,maxIdleConns=%d\n", dbConfig.User, "password", dbConfig.Host, dbConfig.Port, dbConfig.Name, dbConfig.MaxOpenConns, dbConfig.MaxIdleConns)
+	Log = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=true&loc=Local&tls=false&timeout=1m maxOpenConns=%d,maxIdleConns=%d\n", dbConfig.User, dbConfig.Pass, dbConfig.Host, dbConfig.Port, dbConfig.Name, dbConfig.MaxOpenConns, dbConfig.MaxIdleConns)
 	db, err = sql.Open("mysql", dbToken)
 	if err != nil {
 		fmt.Println("error", Log, err)
